@@ -1,0 +1,26 @@
+import sqlite3
+
+# Conexión a la base de datos
+conn = sqlite3.connect("montos.db")
+cursor = conn.cursor()
+
+# Crear tabla para guardar montos y depósitos
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS depositos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre TEXT,
+    monto REAL
+)
+""")
+
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS total (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    monto_total REAL
+)
+""")
+
+# Inicializa el monto total si no existe
+cursor.execute("INSERT INTO total (monto_total) VALUES (0)")
+conn.commit()
+conn.close()

@@ -1,0 +1,20 @@
+[
+    {
+        "id": 1,
+        "nombre": "Maria",
+        "monto": 200,
+        "fecha": "2025-01-27"
+    },
+    {
+        "id": 2,
+        "nombre": "Juan",
+        "monto": 100,
+        "fecha": "2025-01-27"
+    },
+    {
+        "id": 3,
+        "nombre": "Maria",
+        "monto": 200,
+        "fecha": "2025-01-27"
+    }
+]
