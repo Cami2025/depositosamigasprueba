@@ -24,4 +24,5 @@ const auth = getAuth(app);
 // Verificar conexión en la consola
 console.log("🔥 Firebase conectado correctamente:", database);
 
-export { database, auth };
+// ✅ Exportar firebaseConfig para script.js
+export { firebaseConfig, database, auth };
