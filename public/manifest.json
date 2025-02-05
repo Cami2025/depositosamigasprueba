@@ -1,11 +1,12 @@
 {
-  "name": "Fiestasamigas",
-  "short_name": "Fiestasamigas",
+  "name": "DepósitosAmigas",
+  "short_name": "Depósitos",
   "description": "App para registrar depósitos",
-  "start_url": "/",
+  "start_url": "/index.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#4CAF50",
+  "orientation": "portrait",
   "icons": [
     {
       "src": "/icon-192x192.png",
