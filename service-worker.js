@@ -1,4 +1,4 @@
-const CACHE_NAME = 'depositosamigas-cache-v2';
+const CACHE_NAME = 'depositosamigas-cache-v3';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -21,6 +21,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting(); // Forzar que el Service Worker se active de inmediato
 });
 
 // 🚀 Activar y limpiar cachés antiguos
@@ -38,6 +39,7 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  return self.clients.claim(); // Garantiza el control inmediato de las páginas abiertas
 });
 
 // 🌐 Interceptar solicitudes de red
@@ -47,7 +49,7 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         return response || fetch(event.request)
           .catch(() => {
-            // 📴 Si no hay conexión, devolver `index.html` solo si es una página
+            // 📴 Si no hay conexión, devolver index.html
             if (event.request.destination === 'document') {
               return caches.match('/index.html');
             }
