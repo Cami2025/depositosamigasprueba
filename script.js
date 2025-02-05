@@ -1,17 +1,15 @@
-// script.js
-
 console.log("🚀 script.js se ha cargado correctamente.");
 
 import { database, auth } from "./firebase-config.js";
 import { ref, push, onValue, remove, set, get } from "firebase/database";
 import { signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "firebase/auth";
 
-// Configurar la persistencia de la sesión para que no se mantenga después de cerrar o actualizar la página
+// Configurar la persistencia de la sesión
 setPersistence(auth, browserSessionPersistence).catch((error) => {
   console.error("Error al configurar la persistencia de sesión:", error.message);
 });
 
-// Obtener los contenedores definidos en el HTML
+// Obtener los contenedores del HTML
 const loginContainer = document.getElementById("login-container");
 const appContent = document.getElementById("app-content");
 
