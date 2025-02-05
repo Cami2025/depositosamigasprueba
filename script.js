@@ -1,14 +1,18 @@
 console.log("🚀 script.js se ha cargado correctamente.");
 
-import { database, auth } from "./firebase-config.js";
-import { ref, push, onValue, remove, set, get } from "firebase/database";
-import { signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "firebase/auth";
-import { getDatabase, enableIndexedDbPersistence } from "firebase/firestore";
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, getDoc, enableIndexedDbPersistence } from "firebase/firestore";
+import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserSessionPersistence } from "firebase/auth";
+import { firebaseConfig } from "./firebase-config.js";
 
-// ✅ Habilitar persistencia en IndexedDB para datos sin conexión
-const db = getDatabase();
+// Inicializar Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+// ✅ Habilitar persistencia offline
 enableIndexedDbPersistence(db)
-  .then(() => console.log("✅ Modo offline de Firebase activado"))
+  .then(() => console.log("✅ Modo offline de Firestore activado"))
   .catch((err) => {
     if (err.code === 'failed-precondition') {
       console.log("❗ Persistencia no disponible (múltiples pestañas abiertas)");
@@ -17,7 +21,7 @@ enableIndexedDbPersistence(db)
     }
   });
 
-// ✅ Configurar la persistencia de la sesión de autenticación
+// Configurar la persistencia de la sesión de autenticación
 setPersistence(auth, browserSessionPersistence).catch((error) => {
   console.error("Error al configurar la persistencia de sesión:", error.message);
 });
@@ -35,6 +39,7 @@ onAuthStateChanged(auth, (user) => {
   } else {
     if (loginContainer) loginContainer.style.display = "none";
     if (appContent) appContent.style.display = "block";
+    cargarDepositos();
   }
 });
 
@@ -77,55 +82,52 @@ const nameInput = document.getElementById('name');
 const totalAmountSpan = document.getElementById('total-amount');
 const historyList = document.getElementById('history-list');
 
-const depositosRef = ref(database, "depositos");
-const totalRef = ref(database, "totalMonto");
-
-onValue(depositosRef, (snapshot) => {
-  if (historyList) {
-    historyList.innerHTML = "";
-    snapshot.forEach((childSnapshot) => {
-      const data = childSnapshot.val();
-      const key = childSnapshot.key;
-      addDepositToDOM(data.nombre, data.cantidad, data.fecha, key);
-    });
-  }
-});
-
-onValue(totalRef, (snapshot) => {
-  let total = snapshot.val();
-  if (total === null) { 
-    total = 223910;
-    set(totalRef, total);
-  }
-  if (totalAmountSpan) totalAmountSpan.textContent = `$${total}`;
-});
-
-function addDepositToFirebase(nombre, cantidad) {
+async function addDepositToFirestore(nombre, cantidad) {
   const fecha = new Date().toLocaleDateString();
-  push(depositosRef, { nombre, cantidad, fecha });
-  actualizarTotal(cantidad);
+  try {
+    await addDoc(collection(db, "depositos"), { nombre, cantidad, fecha });
+    actualizarTotal(cantidad);
+  } catch (error) {
+    console.error("Error al agregar depósito:", error);
+  }
 }
 
-function actualizarTotal(cantidad) {
-  get(totalRef).then((snapshot) => {
-    const totalActual = snapshot.val() || 223910;
-    const nuevoTotal = totalActual + cantidad;
-    set(totalRef, nuevoTotal);
+async function actualizarTotal(cantidad) {
+  const totalRef = doc(db, "config", "totalMonto");
+  const totalSnap = await getDoc(totalRef);
+
+  let totalActual = totalSnap.exists() ? totalSnap.data().valor : 223910;
+  const nuevoTotal = totalActual + cantidad;
+
+  await updateDoc(totalRef, { valor: nuevoTotal }).catch(() => {
+    console.log("Guardado localmente. Se sincronizará cuando haya conexión.");
   });
+
+  totalAmountSpan.textContent = `$${nuevoTotal}`;
 }
 
-function eliminarDeposito(id, cantidad) {
-  remove(ref(database, `depositos/${id}`)).then(() => {
-    get(totalRef).then((snapshot) => {
-      const totalActual = snapshot.val() || 223910;
-      const nuevoTotal = totalActual - cantidad;
-      set(totalRef, nuevoTotal);
+async function eliminarDeposito(id, cantidad) {
+  try {
+    await deleteDoc(doc(db, "depositos", id));
+    actualizarTotal(-cantidad);
+  } catch (error) {
+    console.error("Error al eliminar depósito:", error);
+  }
+}
+
+function cargarDepositos() {
+  const depositosRef = collection(db, "depositos");
+
+  onSnapshot(depositosRef, (snapshot) => {
+    historyList.innerHTML = "";
+    snapshot.forEach((doc) => {
+      const data = doc.data();
+      addDepositToDOM(data.nombre, data.cantidad, data.fecha, doc.id);
     });
   });
 }
 
 function addDepositToDOM(nombre, cantidad, fecha, id) {
-  if (!historyList) return;
   const listItem = document.createElement('li');
   listItem.innerHTML = `
     ${nombre} depositó $${cantidad} el ${fecha}
@@ -149,7 +151,7 @@ if (depositForm) {
       return;
     }
 
-    addDepositToFirebase(nombre, cantidad);
+    addDepositToFirestore(nombre, cantidad);
 
     const audio = document.getElementById('interaction-audio');
     if (audio) {
