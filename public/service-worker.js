@@ -1,10 +1,11 @@
-const CACHE_NAME = 'depositosamigas-cache-v2';
+const CACHE_NAME = 'depositosamigas-cache-v4';  // 🔄 Incrementé la versión del caché
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
   '/style.css',
   '/script.js',
+  '/firebase-config.js',  // ✅ Añadimos este archivo para el funcionamiento de Firebase offline
   '/creamfields.mp4',
   '/audiofile.mp3',
   '/icon-192x192.png',
@@ -21,6 +22,7 @@ self.addEventListener('install', (event) => {
         return cache.addAll(urlsToCache);
       })
   );
+  self.skipWaiting();  // 🔄 Forzar la activación inmediata del Service Worker actualizado
 });
 
 // 🚀 Activar y limpiar cachés antiguos
@@ -38,6 +40,7 @@ self.addEventListener('activate', (event) => {
       );
     })
   );
+  self.clients.claim();  // 🔄 Controlar todas las pestañas abiertas inmediatamente
 });
 
 // 🌐 Interceptar solicitudes de red
@@ -47,7 +50,7 @@ self.addEventListener('fetch', (event) => {
       .then((response) => {
         return response || fetch(event.request)
           .catch(() => {
-            // 📴 Si no hay conexión, devolver `index.html` solo si es una página
+            // 📴 Si no hay conexión, devolver `index.html` si es una página
             if (event.request.destination === 'document') {
               return caches.match('/index.html');
             }
