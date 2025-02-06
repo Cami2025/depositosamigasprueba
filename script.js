@@ -165,10 +165,10 @@ if (depositForm) {
   });
 }
 
-// 🚀 Registro del Service Worker para PWA
+// 🚀 Registro del Service Worker para PWA (Actualizado)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/service-worker.js')
+    navigator.serviceWorker.register(`${window.location.origin}/service-worker.js`)
       .then(registration => {
         console.log('✅ Service Worker registrado con éxito:', registration);
       })
@@ -190,4 +190,4 @@ function mostrarError(mensaje) {
   errorDisplay.textContent = `❌ ${mensaje}`;
 
   document.body.prepend(errorDisplay);  // Muestra el error al inicio de la página
-    }
+                                                              }
